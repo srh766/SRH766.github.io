@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>种族值计算器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #fff;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .settings-panel {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .settings-panel h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .setting-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .setting-item label {
+            width: 100px;
+            color: #555;
+            font-weight: bold;
+        }
+
+        .setting-item select {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .setting-item select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .stat-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stat-result {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+            background: #f0f0f0;
+            padding: 8px 20px;
+            border-radius: 25px;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .stat-input-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .stat-input-row label {
+            color: #666;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .stat-input-row input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .stat-input-row input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .stat-input-row select {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .stat-input-row select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .nature-bonus {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .nature-neutral {
+            color: #7f8c8d;
+        }
+
+        @media (max-width: 480px) {
+            .stat-input-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .stat-result {
+                font-size: 24px;
+            }
+
+            .damage-calc-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .damage-calc-row label {
+                margin-bottom: 5px;
+            }
+        }
+
+        .damage-calc-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .damage-calc-row label {
+            width: 90px;
+            color: #555;
+            font-weight: bold;
+        }
+
+        .damage-calc-row select,
+        .damage-calc-row input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .damage-calc-row select:focus,
+        .damage-calc-row input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .damage-result {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 10px;
+        }
+
+        .damage-label {
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .damage-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>宝可梦种族值计算器</h1>
+
+        <div class="settings-panel">
+            <h2>全局设置</h2>
+            <div class="setting-item">
+                <label for="globalIV">默认个体值:</label>
+                <select id="globalIV">
+                    <option value="60" selected>60 (默认)</option>
+                    <option value="0">0</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="31">31</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="stat-card" data-stat="hp">
+            <div class="stat-header">
+                <span class="stat-name">HP (生命)</span>
+                <span class="stat-result" id="hp-result">0</span>
+            </div>
+            <div class="stat-input-row">
+                <label>种族值:</label>
+                <input type="number" id="hp-base" placeholder="输入HP种族值" min="0" max="255">
+                <label>性格修正:</label>
+                <select id="hp-nature">
+                    <option value="0" class="nature-neutral">无修正 (0)</option>
+                    <option value="0.2" class="nature-bonus">增加 (+0.2)</option>
+                    <option value="-0.2" class="nature-bonus">减少 (-0.2)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="stat-card" data-stat="attack">
+            <div class="stat-header">
+                <span class="stat-name">攻击</span>
+                <span class="stat-result" id="attack-result">0</span>
+            </div>
+            <div class="stat-input-row">
+                <label>种族值:</label>
+                <input type="number" id="attack-base" placeholder="输入攻击种族值" min="0" max="255">
+                <label>性格修正:</label>
+                <select id="attack-nature">
+                    <option value="0" class="nature-neutral">无修正 (0)</option>
+                    <option value="0.2" class="nature-bonus">增加 (+0.2)</option>
+                    <option value="-0.2" class="nature-bonus">减少 (-0.2)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="stat-card" data-stat="defense">
+            <div class="stat-header">
+                <span class="stat-name">防御</span>
+                <span class="stat-result" id="defense-result">0</span>
+            </div>
+            <div class="stat-input-row">
+                <label>种族值:</label>
+                <input type="number" id="defense-base" placeholder="输入防御种族值" min="0" max="255">
+                <label>性格修正:</label>
+                <select id="defense-nature">
+                    <option value="0" class="nature-neutral">无修正 (0)</option>
+                    <option value="0.2" class="nature-bonus">增加 (+0.2)</option>
+                    <option value="-0.2" class="nature-bonus">减少 (-0.2)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="stat-card" data-stat="spAttack">
+            <div class="stat-header">
+                <span class="stat-name">特攻</span>
+                <span class="stat-result" id="spAttack-result">0</span>
+            </div>
+            <div class="stat-input-row">
+                <label>种族值:</label>
+                <input type="number" id="spAttack-base" placeholder="输入特攻种族值" min="0" max="255">
+                <label>性格修正:</label>
+                <select id="spAttack-nature">
+                    <option value="0" class="nature-neutral">无修正 (0)</option>
+                    <option value="0.2" class="nature-bonus">增加 (+0.2)</option>
+                    <option value="-0.2" class="nature-bonus">减少 (-0.2)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="stat-card" data-stat="spDefense">
+            <div class="stat-header">
+                <span class="stat-name">特防</span>
+                <span class="stat-result" id="spDefense-result">0</span>
+            </div>
+            <div class="stat-input-row">
+                <label>种族值:</label>
+                <input type="number" id="spDefense-base" placeholder="输入特防种族值" min="0" max="255">
+                <label>性格修正:</label>
+                <select id="spDefense-nature">
+                    <option value="0" class="nature-neutral">无修正 (0)</option>
+                    <option value="0.2" class="nature-bonus">增加 (+0.2)</option>
+                    <option value="-0.2" class="nature-bonus">减少 (-0.2)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="stat-card" data-stat="speed">
+            <div class="stat-header">
+                <span class="stat-name">速度</span>
+                <span class="stat-result" id="speed-result">0</span>
+            </div>
+            <div class="stat-input-row">
+                <label>种族值:</label>
+                <input type="number" id="speed-base" placeholder="输入速度种族值" min="0" max="255">
+                <label>性格修正:</label>
+                <select id="speed-nature">
+                    <option value="0" class="nature-neutral">无修正 (0)</option>
+                    <option value="0.2" class="nature-bonus">增加 (+0.2)</option>
+                    <option value="-0.2" class="nature-bonus">减少 (-0.2)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="settings-panel">
+            <h2>伤害计算器</h2>
+            <div class="damage-calc-row">
+                <label>攻击方属性:</label>
+                <select id="attacker-stat">
+                    <option value="physical">物理</option>
+                    <option value="special">特殊</option>
+                </select>
+            </div>
+            <div class="damage-calc-row">
+                <label>攻击数值:</label>
+                <input type="number" id="attack-value" placeholder="输入攻击方数值" min="0">
+            </div>
+            <div class="damage-calc-row">
+                <label>防守方属性:</label>
+                <select id="defender-stat">
+                    <option value="physical">物理</option>
+                    <option value="special">特殊</option>
+                </select>
+            </div>
+            <div class="damage-calc-row">
+                <label>防御数值:</label>
+                <input type="number" id="defense-value" placeholder="输入防守方数值" min="0">
+            </div>
+            <div class="damage-calc-row">
+                <label>技能威力:</label>
+                <input type="number" id="move-power" placeholder="输入技能威力" min="0" max="999">
+            </div>
+            <div class="damage-calc-row">
+                <label>伤害倍率:</label>
+                <input type="number" id="damage-mult" placeholder="如: 2.0" min="0" step="0.1">
+            </div>
+            <div class="damage-result">
+                <span class="damage-label">伤害值:</span>
+                <span class="damage-value" id="damage-result">0</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const globalIVSelect = document.getElementById('globalIV');
+
+        const stats = ['hp', 'attack', 'defense', 'spAttack', 'spDefense', 'speed'];
+
+        function calculateHP(baseStat, iv, nature) {
+            return Math.floor((1.7 * baseStat + iv * 0.85 + 70) * (1 + nature) + 100);
+        }
+
+        function calculateStat(baseStat, iv, nature) {
+            return Math.floor((1.1 * baseStat + iv * 0.55 + 10) * (1 + nature) + 50);
+        }
+
+        function updateResult(stat) {
+            const baseInput = document.getElementById(`${stat}-base`);
+            const natureSelect = document.getElementById(`${stat}-nature`);
+            const resultDisplay = document.getElementById(`${stat}-result`);
+
+            const baseStat = parseInt(baseInput.value) || 0;
+            const iv = parseInt(globalIVSelect.value) || 0;
+            const nature = parseFloat(natureSelect.value) || 0;
+
+            if (baseStat <= 0) {
+                resultDisplay.textContent = '0';
+                return;
+            }
+
+            let result;
+            if (stat === 'hp') {
+                result = calculateHP(baseStat, iv, nature);
+            } else {
+                result = calculateStat(baseStat, iv, nature);
+            }
+
+            resultDisplay.textContent = result;
+        }
+
+        stats.forEach(stat => {
+            const baseInput = document.getElementById(`${stat}-base`);
+            const natureSelect = document.getElementById(`${stat}-nature`);
+
+            baseInput.addEventListener('input', () => updateResult(stat));
+            natureSelect.addEventListener('change', () => updateResult(stat));
+        });
+
+        globalIVSelect.addEventListener('change', () => {
+            stats.forEach(stat => updateResult(stat));
+        });
+
+        const damageInputs = ['attack-value', 'defense-value', 'move-power', 'damage-mult'];
+
+        function calculateDamage() {
+            const movePower = parseFloat(document.getElementById('move-power').value) || 0;
+            const damageMult = parseFloat(document.getElementById('damage-mult').value) || 1;
+
+            const attackValue = parseFloat(document.getElementById('attack-value').value) || 0;
+            const defenseValue = parseFloat(document.getElementById('defense-value').value) || 0;
+
+            const damageResult = document.getElementById('damage-result');
+
+            if (attackValue <= 0 || defenseValue <= 0 || movePower <= 0) {
+                damageResult.textContent = '0';
+                return;
+            }
+
+            const damage = Math.floor((attackValue / defenseValue) * 0.9 * movePower * damageMult);
+            damageResult.textContent = damage;
+        }
+
+        damageInputs.forEach(id => {
+            document.getElementById(id).addEventListener('input', calculateDamage);
+            document.getElementById(id).addEventListener('change', calculateDamage);
+        });
+    </script>
+</body>
+</html>
